@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI JobFit Chatbot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Animated background orbs -->
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-inner">
+
+      <div class="sidebar-logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">JobFit AI</span>
+      </div>
+
+      <!-- Settings -->
+      <section class="sidebar-section">
+        <h3 class="section-label">Settings</h3>
+
+        <div class="setting-item">
+          <label class="setting-label" for="difficulty">MCQ Difficulty</label>
+          <select id="difficulty" class="glass-select">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="skillCount">
+            Max Skills &nbsp;<span id="skillCountVal" class="badge-val">8</span>
+          </label>
+          <input type="range" id="skillCount" min="3" max="20" value="8" class="glass-range" />
+        </div>
+
+        <div class="setting-item toggle-item">
+          <label class="setting-label" for="priorityResume">Prioritize Resume Skills</label>
+          <label class="toggle">
+            <input type="checkbox" id="priorityResume" checked />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- History -->
+      <section class="sidebar-section history-section">
+        <h3 class="section-label">
+          Recent History
+          <button class="clear-btn" id="clearHistoryBtn" title="Clear all history">✕</button>
+        </h3>
+        <div id="historyList" class="history-list">
+          <p class="empty-history">No history yet.<br>Generate questions to start.</p>
+        </div>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- Sidebar toggle (mobile) -->
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- ===== MAIN PANEL ===== -->
+  <main class="main-panel">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-badge">AI-Powered</div>
+      <h1 class="app-title">JobFit <em>Chatbot</em></h1>
+      <p class="app-subtitle">Extract skills · Generate MCQs · Assess your fit — all from a job description</p>
+    </header>
+
+    <!-- Input Card -->
+    <div class="card input-card reveal">
+      <div class="card-header">
+        <span class="card-icon">✦</span>
+        <h2 class="card-title">Job Description</h2>
+      </div>
+
+      <textarea
+        id="jobDesc"
+        class="glass-textarea"
+        placeholder="Paste the job description here… e.g. 'We are looking for a Python developer with 3+ years of experience in Machine Learning, REST APIs, and AWS…'"
+        rows="7"
+      ></textarea>
+
+      <!-- Resume Upload -->
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-inner">
+          <div class="upload-icon">⬆</div>
+          <p class="upload-text">Drop your resume PDF here or <span class="upload-link">browse</span></p>
+          <p class="upload-hint">Optional · PDF only</p>
+        </div>
+        <input type="file" id="resumeFile" accept=".pdf" class="file-input" />
+      </div>
+      <div id="fileChosen" class="file-chosen hidden"></div>
+
+      <button class="btn btn-primary" id="generateBtn">
+        <span class="btn-icon">◈</span> Analyze &amp; Generate
+      </button>
+    </div>
+
+    <!-- ===== RESULTS (hidden until generated) ===== -->
+    <div id="resultsSection" class="results-section hidden">
+
+      <!-- Skills Card -->
+      <div class="card reveal" id="skillsCard">
+        <div class="card-header">
+          <span class="card-icon">◉</span>
+          <h2 class="card-title">Extracted Skills</h2>
+        </div>
+        <div id="skillTags" class="skill-tags"></div>
+        <div id="skillMatchInfo" class="skill-match-info hidden"></div>
+      </div>
+
+      <!-- MCQ Card -->
+      <div class="card reveal" id="mcqCard">
+        <div class="card-header">
+          <span class="card-icon">◈</span>
+          <h2 class="card-title">Multiple Choice Questions</h2>
+          <span class="card-meta" id="mcqMeta"></span>
+        </div>
+        <div id="mcqList" class="mcq-list"></div>
+        <button class="btn btn-secondary" id="submitBtn">
+          <span class="btn-icon">→</span> Submit &amp; Score
+        </button>
+      </div>
+
+      <!-- Interview Questions Card -->
+      <div class="card reveal" id="interviewCard">
+        <div class="card-header">
+          <span class="card-icon">◆</span>
+          <h2 class="card-title">Interview Questions</h2>
+        </div>
+        <ol id="interviewList" class="interview-list"></ol>
+      </div>
+
+      <!-- Score Card -->
+      <div class="card score-card reveal hidden" id="scoreCard">
+        <div class="card-header">
+          <span class="card-icon">◎</span>
+          <h2 class="card-title">Job Fit Score</h2>
+        </div>
+        <div class="score-display">
+          <div class="score-ring-wrap">
+            <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="50"
+                stroke-dasharray="314" stroke-dashoffset="314"/>
+            </svg>
+            <span class="score-number" id="scoreNumber">0%</span>
+          </div>
+          <div class="score-info">
+            <div class="score-bar-wrap">
+              <div class="score-bar-track">
+                <div class="score-bar-fill" id="scoreBarFill"></div>
+              </div>
+              <span class="score-bar-label" id="scoreBarLabel"></span>
+            </div>
+            <p class="score-desc" id="scoreDesc"></p>
+            <div class="score-breakdown" id="scoreBreakdown"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /resultsSection -->
+
+  </main>
+</div><!-- /layout -->
+
+<script src="script.js"></script>
+</body>
+</html>
